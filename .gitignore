@@ -1,0 +1,61 @@
+# OS
+.DS_Store
+Thumbs.db
+
+# Editors / IDEs
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# Env / secrets
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+
+# Logs
+*.log
+logs/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Node
+node_modules/
+.npm/
+.yarn/
+.pnp.*
+dist-node/
+coverage/
+.nyc_output/
+
+# Java / Maven
+target/
+*.class
+*.jar
+*.war
+.mvn/
+hs_err_pid*
+
+# Go
+*.exe
+*.test
+*.out
+vendor/
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+
+# Docker
+docker-compose.override.yml
+
+# Build artifacts
+build/
+out/
+tmp/
