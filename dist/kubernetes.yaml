@@ -80,6 +80,10 @@ spec:
       app.kubernetes.io/owner: retail-store-sample
   template:
     metadata:
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "8080"
+        prometheus.io/path: "/metrics"
       labels:
         app.kubernetes.io/name: catalog
         app.kubernetes.io/instance: catalog
@@ -198,6 +202,10 @@ spec:
       app.kubernetes.io/owner: retail-store-sample
   template:
     metadata:
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "8080"
+        prometheus.io/path: "/actuator/prometheus"
       labels:
         app.kubernetes.io/name: carts
         app.kubernetes.io/instance: carts
@@ -337,6 +345,10 @@ spec:
       app.kubernetes.io/owner: retail-store-sample
   template:
     metadata:
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "8080"
+        prometheus.io/path: "/actuator/prometheus"
       labels:
         app.kubernetes.io/name: orders
         app.kubernetes.io/instance: orders
@@ -459,6 +471,10 @@ spec:
       app.kubernetes.io/owner: retail-store-sample
   template:
     metadata:
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "8080"
+        prometheus.io/path: "/metrics"
       labels:
         app.kubernetes.io/name: checkout
         app.kubernetes.io/instance: checkout
@@ -580,6 +596,10 @@ spec:
       app.kubernetes.io/owner: retail-store-sample
   template:
     metadata:
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "8080"
+        prometheus.io/path: "/actuator/prometheus"
       labels:
         app.kubernetes.io/name: ui
         app.kubernetes.io/instance: ui
