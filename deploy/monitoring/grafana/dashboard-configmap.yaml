@@ -1,0 +1,447 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: grafana-dashboard-the-store
+  namespace: monitoring
+data:
+  the-store.json: |
+    {
+      "annotations": { "list": [] },
+      "description": "The Store — Host, Containers, Pods, Application",
+      "editable": true,
+      "graphTooltip": 1,
+      "id": null,
+      "links": [],
+      "panels": [
+        {
+          "collapsed": false,
+          "gridPos": { "h": 1, "w": 24, "x": 0, "y": 0 },
+          "id": 100,
+          "title": "Host",
+          "type": "row"
+        },
+        {
+          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "fieldConfig": {
+            "defaults": {
+              "unit": "percent",
+              "min": 0, "max": 100,
+              "custom": { "lineWidth": 1, "fillOpacity": 10 }
+            },
+            "overrides": []
+          },
+          "gridPos": { "h": 8, "w": 12, "x": 0, "y": 1 },
+          "id": 1,
+          "options": { "tooltip": { "mode": "multi", "sort": "desc" }, "legend": { "displayMode": "list", "placement": "bottom" } },
+          "targets": [
+            {
+              "datasource": { "type": "prometheus", "uid": "prometheus" },
+              "expr": "(1 - avg(rate(node_cpu_seconds_total{mode=\"idle\"}[2m]))) * 100",
+              "legendFormat": "CPU Used %", "refId": "A"
+            },
+            {
+              "datasource": { "type": "prometheus", "uid": "prometheus" },
+              "expr": "avg(rate(node_cpu_seconds_total{mode=\"iowait\"}[2m])) * 100",
+              "legendFormat": "IO Wait %", "refId": "B"
+            }
+          ],
+          "title": "CPU Usage",
+          "type": "timeseries"
+        },
+        {
+          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "fieldConfig": {
+            "defaults": {
+              "unit": "bytes",
+              "custom": { "lineWidth": 1, "fillOpacity": 10 }
+            },
+            "overrides": []
+          },
+          "gridPos": { "h": 8, "w": 12, "x": 12, "y": 1 },
+          "id": 2,
+          "options": { "tooltip": { "mode": "multi", "sort": "desc" }, "legend": { "displayMode": "list", "placement": "bottom" } },
+          "targets": [
+            {
+              "datasource": { "type": "prometheus", "uid": "prometheus" },
+              "expr": "node_memory_MemTotal_bytes - node_memory_MemAvailable_bytes",
+              "legendFormat": "Used", "refId": "A"
+            },
+            {
+              "datasource": { "type": "prometheus", "uid": "prometheus" },
+              "expr": "node_memory_MemAvailable_bytes",
+              "legendFormat": "Available", "refId": "B"
+            }
+          ],
+          "title": "Memory Usage",
+          "type": "timeseries"
+        },
+        {
+          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "fieldConfig": {
+            "defaults": {
+              "unit": "Bps",
+              "custom": { "lineWidth": 1, "fillOpacity": 10 }
+            },
+            "overrides": []
+          },
+          "gridPos": { "h": 8, "w": 12, "x": 0, "y": 9 },
+          "id": 3,
+          "options": { "tooltip": { "mode": "multi", "sort": "desc" }, "legend": { "displayMode": "list", "placement": "bottom" } },
+          "targets": [
+            {
+              "datasource": { "type": "prometheus", "uid": "prometheus" },
+              "expr": "rate(node_network_receive_bytes_total{device!~\"lo|veth.*|docker.*\"}[2m])",
+              "legendFormat": "RX {{device}}", "refId": "A"
+            },
+            {
+              "datasource": { "type": "prometheus", "uid": "prometheus" },
+              "expr": "rate(node_network_transmit_bytes_total{device!~\"lo|veth.*|docker.*\"}[2m])",
+              "legendFormat": "TX {{device}}", "refId": "B"
+            }
+          ],
+          "title": "Network I/O",
+          "type": "timeseries"
+        },
+        {
+          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "fieldConfig": {
+            "defaults": {
+              "unit": "percent",
+              "min": 0, "max": 100,
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  { "color": "green", "value": null },
+                  { "color": "yellow", "value": 70 },
+                  { "color": "red", "value": 90 }
+                ]
+              }
+            },
+            "overrides": []
+          },
+          "gridPos": { "h": 8, "w": 12, "x": 12, "y": 9 },
+          "id": 4,
+          "options": { "reduceOptions": { "calcs": ["lastNotNull"] }, "orientation": "auto", "textMode": "auto", "colorMode": "background" },
+          "targets": [
+            {
+              "datasource": { "type": "prometheus", "uid": "prometheus" },
+              "expr": "(1 - node_filesystem_avail_bytes{mountpoint=\"/\",fstype!=\"tmpfs\"} / node_filesystem_size_bytes{mountpoint=\"/\",fstype!=\"tmpfs\"}) * 100",
+              "legendFormat": "Disk Used %", "refId": "A"
+            }
+          ],
+          "title": "Disk Usage",
+          "type": "gauge"
+        },
+        {
+          "collapsed": false,
+          "gridPos": { "h": 1, "w": 24, "x": 0, "y": 17 },
+          "id": 200,
+          "title": "Containers (namespace: store)",
+          "type": "row"
+        },
+        {
+          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "fieldConfig": {
+            "defaults": {
+              "unit": "short",
+              "custom": { "lineWidth": 1, "fillOpacity": 10 }
+            },
+            "overrides": []
+          },
+          "gridPos": { "h": 8, "w": 8, "x": 0, "y": 18 },
+          "id": 5,
+          "options": { "tooltip": { "mode": "multi", "sort": "desc" }, "legend": { "displayMode": "list", "placement": "bottom" } },
+          "targets": [
+            {
+              "datasource": { "type": "prometheus", "uid": "prometheus" },
+              "expr": "sum by(pod) (rate(container_cpu_usage_seconds_total{namespace=\"store\",container!=\"\",container!=\"POD\"}[2m]))",
+              "legendFormat": "{{pod}}", "refId": "A"
+            }
+          ],
+          "title": "CPU per Container",
+          "type": "timeseries"
+        },
+        {
+          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "fieldConfig": {
+            "defaults": {
+              "unit": "bytes",
+              "custom": { "lineWidth": 1, "fillOpacity": 10 }
+            },
+            "overrides": []
+          },
+          "gridPos": { "h": 8, "w": 8, "x": 8, "y": 18 },
+          "id": 6,
+          "options": { "tooltip": { "mode": "multi", "sort": "desc" }, "legend": { "displayMode": "list", "placement": "bottom" } },
+          "targets": [
+            {
+              "datasource": { "type": "prometheus", "uid": "prometheus" },
+              "expr": "sum by(pod) (container_memory_working_set_bytes{namespace=\"store\",container!=\"\",container!=\"POD\"})",
+              "legendFormat": "{{pod}}", "refId": "A"
+            }
+          ],
+          "title": "Memory per Container",
+          "type": "timeseries"
+        },
+        {
+          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "fieldConfig": {
+            "defaults": {
+              "unit": "Bps",
+              "custom": { "lineWidth": 1, "fillOpacity": 10 }
+            },
+            "overrides": []
+          },
+          "gridPos": { "h": 8, "w": 8, "x": 16, "y": 18 },
+          "id": 7,
+          "options": { "tooltip": { "mode": "multi", "sort": "desc" }, "legend": { "displayMode": "list", "placement": "bottom" } },
+          "targets": [
+            {
+              "datasource": { "type": "prometheus", "uid": "prometheus" },
+              "expr": "sum by(pod) (rate(container_network_receive_bytes_total{namespace=\"store\"}[2m]))",
+              "legendFormat": "RX {{pod}}", "refId": "A"
+            },
+            {
+              "datasource": { "type": "prometheus", "uid": "prometheus" },
+              "expr": "sum by(pod) (rate(container_network_transmit_bytes_total{namespace=\"store\"}[2m]))",
+              "legendFormat": "TX {{pod}}", "refId": "B"
+            }
+          ],
+          "title": "Network I/O per Container",
+          "type": "timeseries"
+        },
+        {
+          "collapsed": false,
+          "gridPos": { "h": 1, "w": 24, "x": 0, "y": 26 },
+          "id": 300,
+          "title": "Pods (namespace: store)",
+          "type": "row"
+        },
+        {
+          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "fieldConfig": {
+            "defaults": {},
+            "overrides": [
+              {
+                "matcher": { "id": "byName", "options": "Phase" },
+                "properties": [
+                  { "id": "custom.displayMode", "value": "color-background" },
+                  {
+                    "id": "mappings",
+                    "value": [
+                      { "type": "value", "options": { "Running": { "color": "green", "index": 0 } } },
+                      { "type": "value", "options": { "Pending": { "color": "yellow", "index": 1 } } },
+                      { "type": "value", "options": { "Failed":  { "color": "red",    "index": 2 } } }
+                    ]
+                  }
+                ]
+              }
+            ]
+          },
+          "gridPos": { "h": 8, "w": 12, "x": 0, "y": 27 },
+          "id": 8,
+          "options": { "sortBy": [{ "desc": false, "displayName": "Pod" }] },
+          "targets": [
+            {
+              "datasource": { "type": "prometheus", "uid": "prometheus" },
+              "expr": "kube_pod_status_phase{namespace=\"store\"} == 1",
+              "legendFormat": "{{pod}}",
+              "refId": "A",
+              "instant": true,
+              "format": "table"
+            }
+          ],
+          "transformations": [
+            {
+              "id": "organize",
+              "options": {
+                "excludeByName": { "Time": true, "Value": true, "__name__": true, "job": true, "instance": true, "uid": true },
+                "renameByName": { "namespace": "Namespace", "pod": "Pod", "phase": "Phase" }
+              }
+            }
+          ],
+          "title": "Pod Status",
+          "type": "table"
+        },
+        {
+          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "fieldConfig": {
+            "defaults": {
+              "unit": "short",
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  { "color": "green", "value": null },
+                  { "color": "yellow", "value": 1 },
+                  { "color": "red", "value": 5 }
+                ]
+              }
+            },
+            "overrides": []
+          },
+          "gridPos": { "h": 8, "w": 4, "x": 12, "y": 27 },
+          "id": 9,
+          "options": { "reduceOptions": { "calcs": ["lastNotNull"] }, "orientation": "auto", "textMode": "auto", "colorMode": "background", "graphMode": "none" },
+          "targets": [
+            {
+              "datasource": { "type": "prometheus", "uid": "prometheus" },
+              "expr": "sum by(pod) (kube_pod_container_status_restarts_total{namespace=\"store\"})",
+              "legendFormat": "{{pod}}", "refId": "A", "instant": true
+            }
+          ],
+          "title": "Pod Restarts",
+          "type": "stat"
+        },
+        {
+          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "fieldConfig": {
+            "defaults": {
+              "unit": "short",
+              "custom": { "lineWidth": 2 }
+            },
+            "overrides": []
+          },
+          "gridPos": { "h": 8, "w": 4, "x": 16, "y": 27 },
+          "id": 10,
+          "options": { "tooltip": { "mode": "multi" }, "legend": { "displayMode": "list", "placement": "bottom" } },
+          "targets": [
+            {
+              "datasource": { "type": "prometheus", "uid": "prometheus" },
+              "expr": "kube_deployment_status_replicas_available{namespace=\"store\"}",
+              "legendFormat": "avail: {{deployment}}", "refId": "A"
+            },
+            {
+              "datasource": { "type": "prometheus", "uid": "prometheus" },
+              "expr": "kube_deployment_spec_replicas{namespace=\"store\"}",
+              "legendFormat": "desired: {{deployment}}", "refId": "B"
+            }
+          ],
+          "title": "Replicas Available vs Desired",
+          "type": "timeseries"
+        },
+        {
+          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "fieldConfig": {
+            "defaults": {
+              "unit": "short",
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  { "color": "green", "value": null },
+                  { "color": "red", "value": 1 }
+                ]
+              },
+              "mappings": [
+                { "type": "value", "options": { "0": { "color": "green", "index": 0, "text": "All Ready" } } }
+              ]
+            },
+            "overrides": []
+          },
+          "gridPos": { "h": 8, "w": 4, "x": 20, "y": 27 },
+          "id": 11,
+          "options": { "reduceOptions": { "calcs": ["lastNotNull"] }, "orientation": "auto", "textMode": "auto", "colorMode": "background", "graphMode": "none" },
+          "targets": [
+            {
+              "datasource": { "type": "prometheus", "uid": "prometheus" },
+              "expr": "count(kube_pod_status_ready{namespace=\"store\",condition=\"false\"} == 1) or vector(0)",
+              "legendFormat": "Not Ready", "refId": "A", "instant": true
+            }
+          ],
+          "title": "Pods Not Ready",
+          "type": "stat"
+        },
+        {
+          "collapsed": false,
+          "gridPos": { "h": 1, "w": 24, "x": 0, "y": 35 },
+          "id": 400,
+          "title": "Application — requiere anotaciones prometheus.io/scrape en pods de store",
+          "type": "row"
+        },
+        {
+          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "fieldConfig": {
+            "defaults": {
+              "unit": "reqps",
+              "custom": { "lineWidth": 1, "fillOpacity": 10 }
+            },
+            "overrides": []
+          },
+          "gridPos": { "h": 8, "w": 8, "x": 0, "y": 36 },
+          "id": 12,
+          "options": { "tooltip": { "mode": "multi", "sort": "desc" }, "legend": { "displayMode": "list", "placement": "bottom" } },
+          "targets": [
+            {
+              "datasource": { "type": "prometheus", "uid": "prometheus" },
+              "expr": "sum by(pod) (rate(http_server_requests_seconds_count{namespace=\"store\"}[1m]))",
+              "legendFormat": "{{pod}}", "refId": "A"
+            }
+          ],
+          "title": "HTTP Requests/s",
+          "type": "timeseries"
+        },
+        {
+          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "fieldConfig": {
+            "defaults": {
+              "unit": "s",
+              "custom": { "lineWidth": 1, "fillOpacity": 10 }
+            },
+            "overrides": []
+          },
+          "gridPos": { "h": 8, "w": 8, "x": 8, "y": 36 },
+          "id": 13,
+          "options": { "tooltip": { "mode": "multi", "sort": "desc" }, "legend": { "displayMode": "list", "placement": "bottom" } },
+          "targets": [
+            {
+              "datasource": { "type": "prometheus", "uid": "prometheus" },
+              "expr": "histogram_quantile(0.50, sum by(pod,le) (rate(http_server_requests_seconds_bucket{namespace=\"store\"}[1m])))",
+              "legendFormat": "p50 {{pod}}", "refId": "A"
+            },
+            {
+              "datasource": { "type": "prometheus", "uid": "prometheus" },
+              "expr": "histogram_quantile(0.95, sum by(pod,le) (rate(http_server_requests_seconds_bucket{namespace=\"store\"}[1m])))",
+              "legendFormat": "p95 {{pod}}", "refId": "B"
+            },
+            {
+              "datasource": { "type": "prometheus", "uid": "prometheus" },
+              "expr": "histogram_quantile(0.99, sum by(pod,le) (rate(http_server_requests_seconds_bucket{namespace=\"store\"}[1m])))",
+              "legendFormat": "p99 {{pod}}", "refId": "C"
+            }
+          ],
+          "title": "Latency p50 / p95 / p99",
+          "type": "timeseries"
+        },
+        {
+          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "fieldConfig": {
+            "defaults": {
+              "unit": "reqps",
+              "color": { "mode": "fixed", "fixedColor": "red" },
+              "custom": { "lineWidth": 1, "fillOpacity": 10 }
+            },
+            "overrides": []
+          },
+          "gridPos": { "h": 8, "w": 8, "x": 16, "y": 36 },
+          "id": 14,
+          "options": { "tooltip": { "mode": "multi", "sort": "desc" }, "legend": { "displayMode": "list", "placement": "bottom" } },
+          "targets": [
+            {
+              "datasource": { "type": "prometheus", "uid": "prometheus" },
+              "expr": "sum by(pod) (rate(http_server_requests_seconds_count{namespace=\"store\",outcome=\"SERVER_ERROR\"}[1m]))",
+              "legendFormat": "5xx {{pod}}", "refId": "A"
+            }
+          ],
+          "title": "HTTP Error Rate (5xx)",
+          "type": "timeseries"
+        }
+      ],
+      "refresh": "30s",
+      "schemaVersion": 38,
+      "tags": ["the-store", "observability"],
+      "time": { "from": "now-1h", "to": "now" },
+      "timepicker": {},
+      "timezone": "browser",
+      "title": "The Store — Observability",
+      "uid": "the-store-obs",
+      "version": 1
+    }
