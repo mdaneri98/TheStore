@@ -153,7 +153,7 @@ build_images() {
     for service in $SERVICES; do
         print_status "Building $service service..."
         cd src/$service
-        docker build -t store-$service:$IMAGE_TAG .
+        docker build -t the-store-$service:$IMAGE_TAG .
         cd ../..
     done
     print_success "All images built successfully"
@@ -162,7 +162,7 @@ build_images() {
 load_images() {
     print_status "Loading images into Kind cluster..."
     for service in $SERVICES; do
-        kind load docker-image store-$service:$IMAGE_TAG --name $CLUSTER_NAME
+        kind load docker-image the-store-$service:$IMAGE_TAG --name $CLUSTER_NAME
     done
     print_success "Images loaded into cluster"
 }
