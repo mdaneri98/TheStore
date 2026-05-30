@@ -1,0 +1,15 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: store
+  labels:
+    tpe.itba/zone: app
+    app.kubernetes.io/part-of: tpe-observability
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: monitoring
+  labels:
+    tpe.itba/zone: observability
+    app.kubernetes.io/part-of: tpe-observability

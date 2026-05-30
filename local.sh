@@ -50,9 +50,11 @@ check_prerequisites() {
 create_cluster_and_deploy() {
     create_cluster
     install_ingress
+    deploy_namespaces
     build_images
     load_images
     deploy_services
+    deploy_monitoring
 
     [ "$SKIP_TESTS" = true ] && print_warning "Tests skipped" || run_e2e_tests
     [ "$SKIP_STATUS" = true ] && print_warning "Status skipped" || show_status
@@ -107,6 +109,29 @@ EOF
     print_success "Cluster is ready"
 }
 
+deploy_namespaces() {
+    print_status "Applying namespace definitions..."
+    kubectl apply -f $DIR/deploy/namespaces.yaml
+    print_success "Namespaces ready"
+}
+
+deploy_monitoring() {
+    if ! ls $DIR/deploy/monitoring/ &> /dev/null; then
+        print_warning "No monitoring manifests found in deploy/monitoring/, skipping"
+        return
+    fi
+
+    print_status "Deploying monitoring stack to namespace 'monitoring'..."
+    kubectl apply -f $DIR/deploy/monitoring/ --recursive
+
+    if kubectl get deployments -n monitoring --no-headers 2>/dev/null | grep -q .; then
+        print_status "Waiting for monitoring deployments to be available..."
+        kubectl wait --namespace monitoring --for=condition=available deployments --timeout=300s --all
+    fi
+
+    print_success "Monitoring stack deployed"
+}
+
 install_ingress() {
     if ! kubectl get namespace ingress-nginx &> /dev/null; then
         print_status "Installing nginx ingress controller..."
@@ -128,7 +153,7 @@ build_images() {
     for service in $SERVICES; do
         print_status "Building $service service..."
         cd src/$service
-        docker build -t the-store-$service:$IMAGE_TAG .
+        docker build -t store-$service:$IMAGE_TAG .
         cd ../..
     done
     print_success "All images built successfully"
@@ -137,7 +162,7 @@ build_images() {
 load_images() {
     print_status "Loading images into Kind cluster..."
     for service in $SERVICES; do
-        kind load docker-image the-store-$service:$IMAGE_TAG --name $CLUSTER_NAME
+        kind load docker-image store-$service:$IMAGE_TAG --name $CLUSTER_NAME
     done
     print_success "Images loaded into cluster"
 }
@@ -153,15 +178,10 @@ deploy_services() {
             print_status "Waiting for namespace deletion to complete..."
             kubectl wait --for=delete namespace/$NAMESPACE --timeout=300s
             print_success "Namespace '$NAMESPACE' deleted successfully"
+            kubectl apply -f $DIR/deploy/namespaces.yaml
         else
             print_status "Using existing namespace '$NAMESPACE'"
         fi
-    fi
-
-    if ! kubectl get namespace $NAMESPACE &> /dev/null; then
-        print_status "Creating namespace '$NAMESPACE'..."
-        kubectl create namespace $NAMESPACE
-        print_success "Namespace '$NAMESPACE' is ready"
     fi
 
     print_status "Applying Kubernetes manifests to namespace '$NAMESPACE'..."
@@ -205,13 +225,22 @@ show_status() {
         # fi
 
         if kubectl get namespace $NAMESPACE &> /dev/null; then
-            print_status "Service Status:"
+            print_status "Store Services Status:"
             kubectl get all -n $NAMESPACE
         else
             print_warning "No $NAMESPACE namespace found"
         fi
 
+        echo ""
+        if kubectl get namespace monitoring &> /dev/null; then
+            print_status "Monitoring Stack Status:"
+            kubectl get all -n monitoring
+        else
+            print_warning "Monitoring namespace not found"
+        fi
+
         print_success "UI service is accessible at: http://localhost"
+        print_success "Grafana is accessible at: http://grafana.localhost"
     else
         print_warning "Cluster '$CLUSTER_NAME' does not exist"
     fi
@@ -246,8 +275,8 @@ show_help() {
     echo "  load-test       Run load generator tests"
     echo ""
     echo "OPTIONS:"
-    echo "  -c, --cluster NAME   Cluster name (default: the-store)"
-    echo "  -n, --namespace NAME Kubernetes namespace (default: the-store)"
+    echo "  -c, --cluster NAME   Cluster name (default: store)"
+    echo "  -n, --namespace NAME Kubernetes namespace (default: store)"
     echo "  --skip-tests         Skip running e2e tests when creating/rebuilding cluster"
     echo "  --skip-status        Skip status display when creating/rebuilding cluster"
     echo "  -h, --help           Show this help"
@@ -334,8 +363,8 @@ run_load_generator() {
 main() {
     COMMAND="help"
     IMAGE_TAG="latest"
-    CLUSTER_NAME="the-store"
-    NAMESPACE="the-store"
+    CLUSTER_NAME="store"
+    NAMESPACE="store"
     SKIP_TESTS=false
     SKIP_STATUS=false
 
