@@ -354,6 +354,73 @@ data:
           ],
           "title": "HTTP Error Rate (5xx)",
           "type": "timeseries"
+        },
+        {
+          "collapsed": false,
+          "gridPos": { "h": 1, "w": 24, "x": 0, "y": 36 },
+          "id": 500,
+          "title": "Logs",
+          "type": "row"
+        },
+        {
+          "datasource": { "type": "loki", "uid": "loki" },
+          "gridPos": { "h": 10, "w": 16, "x": 0, "y": 37 },
+          "id": 15,
+          "options": {
+            "showLabels": true,
+            "showTime": true,
+            "sortOrder": "Descending",
+            "wrapLogMessage": false
+          },
+          "targets": [
+            {
+              "datasource": { "type": "loki", "uid": "loki" },
+              "expr": "{namespace=\"store\"}",
+              "refId": "A"
+            }
+          ],
+          "title": "Store Logs",
+          "type": "logs"
+        },
+        {
+          "datasource": { "type": "loki", "uid": "loki" },
+          "gridPos": { "h": 10, "w": 8, "x": 16, "y": 37 },
+          "id": 16,
+          "options": {
+            "showLabels": true,
+            "showTime": true,
+            "sortOrder": "Descending",
+            "wrapLogMessage": false
+          },
+          "targets": [
+            {
+              "datasource": { "type": "loki", "uid": "loki" },
+              "expr": "{namespace=\"store\"} |~ \"(?i)( 5[0-9][0-9] |status.?=.?5|server_error|error)\"",
+              "refId": "A"
+            }
+          ],
+          "title": "Error Logs",
+          "type": "logs"
+        },
+        {
+          "datasource": { "type": "loki", "uid": "loki" },
+          "gridPos": { "h": 8, "w": 24, "x": 0, "y": 47 },
+          "id": 17,
+          "options": {
+            "showLabels": true,
+            "showTime": true,
+            "sortOrder": "Descending",
+            "wrapLogMessage": false
+          },
+          "targets": [
+            {
+              "datasource": { "type": "loki", "uid": "loki" },
+              "expr": "{namespace=\"monitoring\", app=~\"loki|promtail\"}",
+              "refId": "A"
+            }
+          ],
+          "title": "Loki / Promtail Logs",
+          "type": "logs"
         }
       ],
       "refresh": "30s",
