@@ -29,6 +29,7 @@ import { ChaosController } from './chaos/chaos.controller';
 import { ChaosService } from './chaos/chaos.service';
 import { ChaosHealthIndicator } from './chaos/chaos.health';
 import { ChaosMiddleware } from './chaos/chaos.middleware';
+import { HttpMetricsMiddleware } from './middleware/http-metrics.middleware';
 
 const OpenTelemetryModuleConfig = OpenTelemetryModule.forRoot({});
 
@@ -47,6 +48,7 @@ const OpenTelemetryModuleConfig = OpenTelemetryModule.forRoot({});
 })
 export class AppModule implements NestModule {
   configure(consumer: MiddlewareConsumer) {
+    consumer.apply(HttpMetricsMiddleware).exclude('health', 'metrics').forRoutes('*');
     consumer.apply(LoggerMiddleware).exclude('health').forRoutes('*');
     consumer.apply(ChaosMiddleware).forRoutes('checkout/*splat');
   }
