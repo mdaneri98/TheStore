@@ -21,6 +21,32 @@ data:
       compaction:
         block_retention: 24h
 
+    metrics_generator:
+      processor:
+        service_graphs:
+          wait: 10s
+        span_metrics:
+          dimensions:
+            - http.method
+            - http.status_code
+      registry:
+        collection_interval: 15s
+        external_labels:
+          source: tempo
+      storage:
+        path: /var/tempo/generator/wal
+        remote_write_add_org_id_header: false
+        remote_write:
+          - url: http://prometheus.monitoring.svc.cluster.local:9090/api/v1/write
+            send_exemplars: true
+
+    overrides:
+      defaults:
+        metrics_generator:
+          processors:
+            - service-graphs
+            - span-metrics
+
     storage:
       trace:
         backend: local
