@@ -1,0 +1,589 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: grafana-dashboard-operations
+  namespace: monitoring
+data:
+  pod-resources.json: |
+    {
+      "annotations": { "list": [] },
+      "description": "CPU and memory usage per Pod across all namespaces.",
+      "editable": true,
+      "graphTooltip": 1,
+      "id": null,
+      "links": [],
+      "panels": [
+        {
+          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "fieldConfig": { "defaults": { "unit": "cores", "min": 0, "custom": { "fillOpacity": 15, "lineWidth": 1 } }, "overrides": [] },
+          "gridPos": { "h": 9, "w": 12, "x": 0, "y": 0 },
+          "id": 1,
+          "options": { "legend": { "displayMode": "table", "placement": "bottom", "calcs": ["lastNotNull", "max"] }, "tooltip": { "mode": "multi", "sort": "desc" } },
+          "targets": [
+            {
+              "expr": "sum by (namespace, pod) (rate(container_cpu_usage_seconds_total{namespace=~\"$namespace\",pod=~\"$pod\",container!=\"\",container!=\"POD\",image!=\"\"}[$__rate_interval]))",
+              "legendFormat": "{{namespace}} / {{pod}}",
+              "refId": "A"
+            }
+          ],
+          "title": "CPU Usage by Pod",
+          "type": "timeseries"
+        },
+        {
+          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "fieldConfig": { "defaults": { "unit": "bytes", "min": 0, "custom": { "fillOpacity": 15, "lineWidth": 1 } }, "overrides": [] },
+          "gridPos": { "h": 9, "w": 12, "x": 12, "y": 0 },
+          "id": 2,
+          "options": { "legend": { "displayMode": "table", "placement": "bottom", "calcs": ["lastNotNull", "max"] }, "tooltip": { "mode": "multi", "sort": "desc" } },
+          "targets": [
+            {
+              "expr": "sum by (namespace, pod) (container_memory_working_set_bytes{namespace=~\"$namespace\",pod=~\"$pod\",container!=\"\",container!=\"POD\",image!=\"\"})",
+              "legendFormat": "{{namespace}} / {{pod}}",
+              "refId": "A"
+            }
+          ],
+          "title": "Memory Usage by Pod",
+          "type": "timeseries"
+        },
+        {
+          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "fieldConfig": { "defaults": { "unit": "cores", "min": 0 }, "overrides": [] },
+          "gridPos": { "h": 10, "w": 12, "x": 0, "y": 9 },
+          "id": 3,
+          "options": { "showHeader": true, "sortBy": [{ "desc": true, "displayName": "Value" }] },
+          "targets": [
+            {
+              "expr": "sort_desc(sum by (namespace, pod) (rate(container_cpu_usage_seconds_total{namespace=~\"$namespace\",pod=~\"$pod\",container!=\"\",container!=\"POD\",image!=\"\"}[5m])))",
+              "format": "table",
+              "instant": true,
+              "refId": "A"
+            }
+          ],
+          "transformations": [
+            {
+              "id": "organize",
+              "options": {
+                "excludeByName": { "Time": true },
+                "renameByName": { "namespace": "Namespace", "pod": "Pod", "Value": "Current CPU" }
+              }
+            }
+          ],
+          "title": "Current CPU by Pod",
+          "type": "table"
+        },
+        {
+          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "fieldConfig": { "defaults": { "unit": "bytes", "min": 0 }, "overrides": [] },
+          "gridPos": { "h": 10, "w": 12, "x": 12, "y": 9 },
+          "id": 4,
+          "options": { "showHeader": true, "sortBy": [{ "desc": true, "displayName": "Value" }] },
+          "targets": [
+            {
+              "expr": "sort_desc(sum by (namespace, pod) (container_memory_working_set_bytes{namespace=~\"$namespace\",pod=~\"$pod\",container!=\"\",container!=\"POD\",image!=\"\"}))",
+              "format": "table",
+              "instant": true,
+              "refId": "A"
+            }
+          ],
+          "transformations": [
+            {
+              "id": "organize",
+              "options": {
+                "excludeByName": { "Time": true },
+                "renameByName": { "namespace": "Namespace", "pod": "Pod", "Value": "Current Memory" }
+              }
+            }
+          ],
+          "title": "Current Memory by Pod",
+          "type": "table"
+        },
+        {
+          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "fieldConfig": { "defaults": { "unit": "percentunit", "min": 0, "custom": { "fillOpacity": 10, "lineWidth": 1 } }, "overrides": [] },
+          "gridPos": { "h": 8, "w": 12, "x": 0, "y": 19 },
+          "id": 5,
+          "options": { "legend": { "displayMode": "list", "placement": "bottom" }, "tooltip": { "mode": "multi", "sort": "desc" } },
+          "targets": [
+            {
+              "expr": "sum by (namespace, pod) (rate(container_cpu_cfs_throttled_periods_total{namespace=~\"$namespace\",pod=~\"$pod\",container!=\"\",container!=\"POD\"}[$__rate_interval])) / clamp_min(sum by (namespace, pod) (rate(container_cpu_cfs_periods_total{namespace=~\"$namespace\",pod=~\"$pod\",container!=\"\",container!=\"POD\"}[$__rate_interval])), 0.001)",
+              "legendFormat": "{{namespace}} / {{pod}}",
+              "refId": "A"
+            }
+          ],
+          "title": "CPU Throttling by Pod",
+          "type": "timeseries"
+        },
+        {
+          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "fieldConfig": { "defaults": { "unit": "percent", "min": 0, "custom": { "fillOpacity": 10, "lineWidth": 1 } }, "overrides": [] },
+          "gridPos": { "h": 8, "w": 12, "x": 12, "y": 19 },
+          "id": 6,
+          "options": { "legend": { "displayMode": "list", "placement": "bottom" }, "tooltip": { "mode": "multi", "sort": "desc" } },
+          "targets": [
+            {
+              "expr": "100 * sum by (namespace, pod) (container_memory_working_set_bytes{namespace=~\"$namespace\",pod=~\"$pod\",container!=\"\",container!=\"POD\",image!=\"\"}) / clamp_min(sum by (namespace, pod) (kube_pod_container_resource_requests{namespace=~\"$namespace\",pod=~\"$pod\",resource=\"memory\"}), 1)",
+              "legendFormat": "{{namespace}} / {{pod}}",
+              "refId": "A"
+            }
+          ],
+          "title": "Memory Usage vs Request",
+          "type": "timeseries"
+        }
+      ],
+      "refresh": "30s",
+      "schemaVersion": 39,
+      "tags": ["the-store", "kubernetes", "resources"],
+      "templating": {
+        "list": [
+          {
+            "allValue": ".*",
+            "current": { "selected": true, "text": "All", "value": "$__all" },
+            "datasource": { "type": "prometheus", "uid": "prometheus" },
+            "definition": "label_values(kube_pod_info, namespace)",
+            "includeAll": true,
+            "label": "Namespace",
+            "multi": true,
+            "name": "namespace",
+            "query": { "query": "label_values(kube_pod_info, namespace)", "refId": "namespace" },
+            "refresh": 1,
+            "sort": 1,
+            "type": "query"
+          },
+          {
+            "allValue": ".*",
+            "current": { "selected": true, "text": "All", "value": "$__all" },
+            "datasource": { "type": "prometheus", "uid": "prometheus" },
+            "definition": "label_values(kube_pod_info{namespace=~\"$namespace\"}, pod)",
+            "includeAll": true,
+            "label": "Pod",
+            "multi": true,
+            "name": "pod",
+            "query": { "query": "label_values(kube_pod_info{namespace=~\"$namespace\"}, pod)", "refId": "pod" },
+            "refresh": 1,
+            "sort": 1,
+            "type": "query"
+          }
+        ]
+      },
+      "time": { "from": "now-1h", "to": "now" },
+      "timezone": "browser",
+      "title": "Kubernetes — Pod Resources",
+      "uid": "k8s-pod-resources",
+      "version": 1
+    }
+  pod-status.json: |
+    {
+      "annotations": { "list": [] },
+      "description": "Current status of all Pods and recent evidence of stopped, deleted, or restarted Pods. Kubernetes represents stopped workloads as Succeeded, Failed, terminated, or deleted.",
+      "editable": true,
+      "graphTooltip": 1,
+      "id": null,
+      "links": [],
+      "panels": [
+        {
+          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "fieldConfig": {
+            "defaults": {
+              "color": { "mode": "thresholds" },
+              "thresholds": { "mode": "absolute", "steps": [{ "color": "red", "value": null }, { "color": "green", "value": 1 }] }
+            },
+            "overrides": []
+          },
+          "gridPos": { "h": 5, "w": 6, "x": 0, "y": 0 },
+          "id": 1,
+          "options": { "colorMode": "background", "graphMode": "none", "reduceOptions": { "calcs": ["lastNotNull"] }, "textMode": "auto" },
+          "targets": [
+            {
+              "expr": "sum(kube_pod_status_phase{namespace=~\"$namespace\",phase=\"Running\"} == 1)",
+              "instant": true,
+              "refId": "A"
+            }
+          ],
+          "title": "Running Pods",
+          "type": "stat"
+        },
+        {
+          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "fieldConfig": {
+            "defaults": {
+              "color": { "mode": "thresholds" },
+              "thresholds": { "mode": "absolute", "steps": [{ "color": "green", "value": null }, { "color": "red", "value": 1 }] }
+            },
+            "overrides": []
+          },
+          "gridPos": { "h": 5, "w": 6, "x": 6, "y": 0 },
+          "id": 2,
+          "options": { "colorMode": "background", "graphMode": "none", "reduceOptions": { "calcs": ["lastNotNull"] }, "textMode": "auto" },
+          "targets": [
+            {
+              "expr": "sum(kube_pod_status_phase{namespace=~\"$namespace\",phase!=\"Running\"} == 1) or vector(0)",
+              "instant": true,
+              "refId": "A"
+            }
+          ],
+          "title": "Non-Running Pods",
+          "type": "stat"
+        },
+        {
+          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "fieldConfig": {
+            "defaults": {
+              "color": { "mode": "thresholds" },
+              "thresholds": { "mode": "absolute", "steps": [{ "color": "green", "value": null }, { "color": "red", "value": 1 }] }
+            },
+            "overrides": []
+          },
+          "gridPos": { "h": 5, "w": 6, "x": 12, "y": 0 },
+          "id": 3,
+          "options": { "colorMode": "background", "graphMode": "none", "reduceOptions": { "calcs": ["lastNotNull"] }, "textMode": "auto" },
+          "targets": [
+            {
+              "expr": "sum(kube_pod_status_ready{namespace=~\"$namespace\",condition=\"false\"} == 1) or vector(0)",
+              "instant": true,
+              "refId": "A"
+            }
+          ],
+          "title": "Not Ready Pods",
+          "type": "stat"
+        },
+        {
+          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "fieldConfig": {
+            "defaults": {
+              "color": { "mode": "thresholds" },
+              "thresholds": { "mode": "absolute", "steps": [{ "color": "green", "value": null }, { "color": "yellow", "value": 1 }, { "color": "red", "value": 5 }] }
+            },
+            "overrides": []
+          },
+          "gridPos": { "h": 5, "w": 6, "x": 18, "y": 0 },
+          "id": 4,
+          "options": { "colorMode": "background", "graphMode": "none", "reduceOptions": { "calcs": ["lastNotNull"] }, "textMode": "auto" },
+          "targets": [
+            {
+              "expr": "sum(kube_pod_container_status_restarts_total{namespace=~\"$namespace\"}) or vector(0)",
+              "instant": true,
+              "refId": "A"
+            }
+          ],
+          "title": "Total Restarts",
+          "type": "stat"
+        },
+        {
+          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "fieldConfig": {
+            "defaults": {},
+            "overrides": [
+              {
+                "matcher": { "id": "byName", "options": "Phase" },
+                "properties": [
+                  { "id": "custom.displayMode", "value": "color-background" },
+                  {
+                    "id": "mappings",
+                    "value": [
+                      { "options": { "Running": { "color": "green", "index": 0 } }, "type": "value" },
+                      { "options": { "Pending": { "color": "yellow", "index": 1 } }, "type": "value" },
+                      { "options": { "Succeeded": { "color": "blue", "index": 2 } }, "type": "value" },
+                      { "options": { "Failed": { "color": "red", "index": 3 } }, "type": "value" },
+                      { "options": { "Unknown": { "color": "orange", "index": 4 } }, "type": "value" }
+                    ]
+                  }
+                ]
+              }
+            ]
+          },
+          "gridPos": { "h": 12, "w": 24, "x": 0, "y": 5 },
+          "id": 5,
+          "options": { "showHeader": true, "sortBy": [{ "desc": false, "displayName": "Namespace" }, { "desc": false, "displayName": "Pod" }] },
+          "targets": [
+            {
+              "expr": "kube_pod_status_phase{namespace=~\"$namespace\"} == 1",
+              "format": "table",
+              "instant": true,
+              "refId": "A"
+            }
+          ],
+          "transformations": [
+            {
+              "id": "organize",
+              "options": {
+                "excludeByName": { "Time": true, "Value": true, "__name__": true, "instance": true, "job": true, "uid": true },
+                "renameByName": { "namespace": "Namespace", "phase": "Phase", "pod": "Pod" }
+              }
+            }
+          ],
+          "title": "Current Status of All Pods",
+          "type": "table"
+        },
+        {
+          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "fieldConfig": { "defaults": {}, "overrides": [] },
+          "gridPos": { "h": 10, "w": 12, "x": 0, "y": 17 },
+          "id": 6,
+          "options": { "showHeader": true },
+          "targets": [
+            {
+              "expr": "kube_pod_container_status_waiting_reason{namespace=~\"$namespace\"} == 1",
+              "format": "table",
+              "instant": true,
+              "refId": "A"
+            }
+          ],
+          "transformations": [
+            {
+              "id": "organize",
+              "options": {
+                "excludeByName": { "Time": true, "Value": true, "__name__": true, "instance": true, "job": true, "uid": true },
+                "renameByName": { "container": "Container", "namespace": "Namespace", "pod": "Pod", "reason": "Reason" }
+              }
+            }
+          ],
+          "title": "Waiting / Blocked Pods",
+          "type": "table"
+        },
+        {
+          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "fieldConfig": { "defaults": {}, "overrides": [] },
+          "gridPos": { "h": 10, "w": 12, "x": 12, "y": 17 },
+          "id": 7,
+          "options": { "showHeader": true },
+          "targets": [
+            {
+              "expr": "kube_pod_container_status_last_terminated_reason{namespace=~\"$namespace\"} == 1",
+              "format": "table",
+              "instant": true,
+              "refId": "A"
+            }
+          ],
+          "transformations": [
+            {
+              "id": "organize",
+              "options": {
+                "excludeByName": { "Time": true, "Value": true, "__name__": true, "instance": true, "job": true, "uid": true },
+                "renameByName": { "container": "Container", "namespace": "Namespace", "pod": "Pod", "reason": "Last Reason" }
+              }
+            }
+          ],
+          "title": "Latest Container Terminations",
+          "type": "table"
+        },
+        {
+          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "description": "Pods whose deletion was observed by Prometheus within the selected time range.",
+          "fieldConfig": { "defaults": { "unit": "dateTimeAsIso" }, "overrides": [] },
+          "gridPos": { "h": 10, "w": 24, "x": 0, "y": 27 },
+          "id": 8,
+          "options": { "showHeader": true },
+          "targets": [
+            {
+              "expr": "max_over_time(kube_pod_deletion_timestamp{namespace=~\"$namespace\"}[$__range])",
+              "format": "table",
+              "instant": true,
+              "refId": "A"
+            }
+          ],
+          "transformations": [
+            {
+              "id": "organize",
+              "options": {
+                "excludeByName": { "Time": true, "__name__": true, "instance": true, "job": true, "uid": true },
+                "renameByName": { "namespace": "Namespace", "pod": "Deleted Pod", "Value": "Deleted At" }
+              }
+            }
+          ],
+          "title": "Pods Deleted Within Time Range",
+          "type": "table"
+        }
+      ],
+      "refresh": "30s",
+      "schemaVersion": 39,
+      "tags": ["the-store", "kubernetes", "pod-status"],
+      "templating": {
+        "list": [
+          {
+            "allValue": ".*",
+            "current": { "selected": true, "text": "All", "value": "$__all" },
+            "datasource": { "type": "prometheus", "uid": "prometheus" },
+            "definition": "label_values(kube_pod_info, namespace)",
+            "includeAll": true,
+            "label": "Namespace",
+            "multi": true,
+            "name": "namespace",
+            "query": { "query": "label_values(kube_pod_info, namespace)", "refId": "namespace" },
+            "refresh": 1,
+            "sort": 1,
+            "type": "query"
+          }
+        ]
+      },
+      "time": { "from": "now-6h", "to": "now" },
+      "timezone": "browser",
+      "title": "Kubernetes — Pod Status",
+      "uid": "k8s-pod-status",
+      "version": 1
+    }
+  service-errors.json: |
+    {
+      "annotations": { "list": [] },
+      "description": "Time correlation between HTTP status codes by microservice and centralized logs in Loki. Select a service and time range; all panels update together.",
+      "editable": true,
+      "graphTooltip": 1,
+      "id": null,
+      "links": [],
+      "panels": [
+        {
+          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "fieldConfig": { "defaults": { "unit": "reqps", "min": 0, "custom": { "fillOpacity": 20, "lineWidth": 1, "stacking": { "group": "A", "mode": "normal" } } }, "overrides": [] },
+          "gridPos": { "h": 9, "w": 16, "x": 0, "y": 0 },
+          "id": 1,
+          "options": { "legend": { "displayMode": "table", "placement": "bottom", "calcs": ["lastNotNull", "sum"] }, "tooltip": { "mode": "multi", "sort": "desc" } },
+          "targets": [
+            {
+              "expr": "sum by (service, status) (label_replace(rate(http_server_requests_seconds_count{namespace=\"store\",app_kubernetes_io_name=~\"$service\",uri!~\"/actuator/.*|/health|/metrics\"}[$__rate_interval]),\"service\",\"$1\",\"app_kubernetes_io_name\",\"(.*)\") or label_replace(label_replace(rate(gin_requests_total{namespace=\"store\",app_kubernetes_io_name=~\"$service\",url!~\"/health|/metrics\"}[$__rate_interval]),\"status\",\"$1\",\"code\",\"(.*)\"),\"service\",\"$1\",\"app_kubernetes_io_name\",\"(.*)\"))",
+              "legendFormat": "{{service}} HTTP {{status}}",
+              "refId": "A"
+            }
+          ],
+          "title": "HTTP Status Codes by Microservice",
+          "type": "timeseries"
+        },
+        {
+          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "fieldConfig": {
+            "defaults": {
+              "color": { "mode": "thresholds" },
+              "thresholds": { "mode": "absolute", "steps": [{ "color": "green", "value": null }, { "color": "red", "value": 0.001 }] },
+              "unit": "reqps"
+            },
+            "overrides": []
+          },
+          "gridPos": { "h": 9, "w": 8, "x": 16, "y": 0 },
+          "id": 2,
+          "options": { "colorMode": "background", "graphMode": "area", "reduceOptions": { "calcs": ["lastNotNull"] }, "textMode": "auto" },
+          "targets": [
+            {
+              "expr": "sum by (service) (label_replace(rate(http_server_requests_seconds_count{namespace=\"store\",app_kubernetes_io_name=~\"$service\",status=~\"5..\"}[$__rate_interval]),\"service\",\"$1\",\"app_kubernetes_io_name\",\"(.*)\") or label_replace(rate(gin_requests_total{namespace=\"store\",app_kubernetes_io_name=~\"$service\",code=~\"5..\"}[$__rate_interval]),\"service\",\"$1\",\"app_kubernetes_io_name\",\"(.*)\"))",
+              "legendFormat": "{{service}}",
+              "refId": "A"
+            }
+          ],
+          "title": "Current 5xx Rate",
+          "type": "stat"
+        },
+        {
+          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "fieldConfig": { "defaults": { "unit": "reqps", "min": 0, "color": { "fixedColor": "red", "mode": "fixed" }, "custom": { "fillOpacity": 20, "lineWidth": 2 } }, "overrides": [] },
+          "gridPos": { "h": 8, "w": 12, "x": 0, "y": 9 },
+          "id": 3,
+          "options": { "legend": { "displayMode": "table", "placement": "bottom", "calcs": ["lastNotNull", "sum"] }, "tooltip": { "mode": "multi", "sort": "desc" } },
+          "targets": [
+            {
+              "expr": "sum by (service) (label_replace(rate(http_server_requests_seconds_count{namespace=\"store\",app_kubernetes_io_name=~\"$service\",status=~\"5..\"}[$__rate_interval]),\"service\",\"$1\",\"app_kubernetes_io_name\",\"(.*)\") or label_replace(rate(gin_requests_total{namespace=\"store\",app_kubernetes_io_name=~\"$service\",code=~\"5..\"}[$__rate_interval]),\"service\",\"$1\",\"app_kubernetes_io_name\",\"(.*)\"))",
+              "legendFormat": "{{service}}",
+              "refId": "A"
+            }
+          ],
+          "title": "HTTP 5xx Errors by Microservice",
+          "type": "timeseries"
+        },
+        {
+          "datasource": { "type": "loki", "uid": "loki" },
+          "fieldConfig": { "defaults": { "unit": "short", "min": 0, "color": { "fixedColor": "orange", "mode": "fixed" }, "custom": { "fillOpacity": 20, "lineWidth": 1 } }, "overrides": [] },
+          "gridPos": { "h": 8, "w": 12, "x": 12, "y": 9 },
+          "id": 4,
+          "options": { "legend": { "displayMode": "table", "placement": "bottom", "calcs": ["lastNotNull", "sum"] }, "tooltip": { "mode": "multi", "sort": "desc" } },
+          "targets": [
+            {
+              "expr": "sum by (app) (count_over_time({namespace=\"store\",app=~\"$service\"} |~ \"(?i)(5[0-9]{2}|server.?error|exception|error|failed)\" [$__interval]))",
+              "legendFormat": "{{app}}",
+              "queryType": "range",
+              "refId": "A"
+            }
+          ],
+          "title": "Error Events Detected in Loki",
+          "type": "timeseries"
+        },
+        {
+          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "fieldConfig": { "defaults": { "unit": "short" }, "overrides": [] },
+          "gridPos": { "h": 10, "w": 24, "x": 0, "y": 17 },
+          "id": 5,
+          "options": { "showHeader": true, "sortBy": [{ "desc": true, "displayName": "Value" }] },
+          "targets": [
+            {
+              "expr": "sort_desc(sum by (service, status) (label_replace(increase(http_server_requests_seconds_count{namespace=\"store\",app_kubernetes_io_name=~\"$service\",uri!~\"/actuator/.*|/health|/metrics\"}[$__range]),\"service\",\"$1\",\"app_kubernetes_io_name\",\"(.*)\") or label_replace(label_replace(increase(gin_requests_total{namespace=\"store\",app_kubernetes_io_name=~\"$service\",url!~\"/health|/metrics\"}[$__range]),\"status\",\"$1\",\"code\",\"(.*)\"),\"service\",\"$1\",\"app_kubernetes_io_name\",\"(.*)\")))",
+              "format": "table",
+              "instant": true,
+              "refId": "A"
+            }
+          ],
+          "transformations": [
+            {
+              "id": "organize",
+              "options": {
+                "excludeByName": { "Time": true },
+                "renameByName": { "service": "Microservice", "status": "HTTP Status", "Value": "Responses Within Time Range" }
+              }
+            }
+          ],
+          "title": "HTTP Response Summary Within Time Range",
+          "type": "table"
+        },
+        {
+          "datasource": { "type": "loki", "uid": "loki" },
+          "description": "Logs from the same microservice and time range as the 5xx panels. Includes 5xx status codes, errors, exceptions, and failures.",
+          "gridPos": { "h": 13, "w": 24, "x": 0, "y": 27 },
+          "id": 6,
+          "options": { "dedupStrategy": "none", "enableLogDetails": true, "prettifyLogMessage": false, "showCommonLabels": false, "showLabels": true, "showTime": true, "sortOrder": "Descending", "wrapLogMessage": true },
+          "targets": [
+            {
+              "expr": "{namespace=\"store\",app=~\"$service\"} |~ \"(?i)(5[0-9]{2}|server.?error|exception|error|failed)\"",
+              "queryType": "range",
+              "refId": "A"
+            }
+          ],
+          "title": "Logs Correlated with Errors",
+          "type": "logs"
+        },
+        {
+          "datasource": { "type": "loki", "uid": "loki" },
+          "gridPos": { "h": 12, "w": 24, "x": 0, "y": 40 },
+          "id": 7,
+          "options": { "dedupStrategy": "none", "enableLogDetails": true, "prettifyLogMessage": false, "showCommonLabels": false, "showLabels": true, "showTime": true, "sortOrder": "Descending", "wrapLogMessage": true },
+          "targets": [
+            {
+              "expr": "{namespace=\"store\",app=~\"$service\"}",
+              "queryType": "range",
+              "refId": "A"
+            }
+          ],
+          "title": "All Logs for Selected Microservice",
+          "type": "logs"
+        }
+      ],
+      "refresh": "15s",
+      "schemaVersion": 39,
+      "tags": ["the-store", "http", "loki", "errors"],
+      "templating": {
+        "list": [
+          {
+            "allValue": "catalog|carts|checkout|orders|ui",
+            "current": { "selected": true, "text": "All", "value": "$__all" },
+            "datasource": { "type": "prometheus", "uid": "prometheus" },
+            "definition": "label_values(up{job=\"store-pods\"}, app_kubernetes_io_name)",
+            "includeAll": true,
+            "label": "Microservice",
+            "multi": true,
+            "name": "service",
+            "query": { "query": "label_values(up{job=\"store-pods\"}, app_kubernetes_io_name)", "refId": "service" },
+            "refresh": 1,
+            "sort": 1,
+            "type": "query"
+          }
+        ]
+      },
+      "time": { "from": "now-1h", "to": "now" },
+      "timezone": "browser",
+      "title": "The Store — HTTP 5xx and Logs",
+      "uid": "store-http-errors",
+      "version": 1
+    }

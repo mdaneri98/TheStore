@@ -60,7 +60,11 @@ spec:
           configMap:
             name: grafana-dashboard-provider
         - name: dashboard-the-store
-          configMap:
-            name: grafana-dashboard-the-store
+          projected:
+            sources:
+              - configMap:
+                  name: grafana-dashboard-the-store
+              - configMap:
+                  name: grafana-dashboard-operations
         - name: storage
           emptyDir: {}

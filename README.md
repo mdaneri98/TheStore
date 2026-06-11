@@ -54,6 +54,14 @@ Use the `local.sh` script to manage your local Kubernetes cluster:
 
 After running `./local.sh create-cluster`, access The Store at: **http://localhost**.
 
+### Observability
+
+Access Grafana at **http://grafana.localhost** using `admin` / `admin`.
+
+See [Dashboard justifications](./docs/dashboard-justifications.md) for the purpose of each
+dashboard, the operational decisions supported by every panel, and the recommended diagnostic
+workflow.
+
 ### Testing
 
 #### E2E Testing
