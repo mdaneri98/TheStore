@@ -73,4 +73,6 @@ management:
       percentiles-histogram:
         http.server.requests: true
 
-otel.sdk.disabled: true
+otel:
+  sdk:
+    disabled: ${OTEL_SDK_DISABLED:true}

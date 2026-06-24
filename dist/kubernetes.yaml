@@ -110,6 +110,8 @@ spec:
               value: none
             - name: OTEL_LOGS_EXPORTER
               value: none
+            - name: OTEL_PROPAGATORS
+              value: tracecontext,baggage
           envFrom:
             - configMapRef:
                 name: catalog
@@ -251,6 +253,8 @@ spec:
               value: none
             - name: OTEL_LOGS_EXPORTER
               value: none
+            - name: OTEL_PROPAGATORS
+              value: tracecontext,baggage
           envFrom:
             - configMapRef:
                 name: carts
@@ -410,6 +414,8 @@ spec:
               value: none
             - name: OTEL_LOGS_EXPORTER
               value: none
+            - name: OTEL_PROPAGATORS
+              value: tracecontext,baggage
           envFrom:
             - configMapRef:
                 name: orders
@@ -548,6 +554,8 @@ spec:
               value: none
             - name: OTEL_LOGS_EXPORTER
               value: none
+            - name: OTEL_PROPAGATORS
+              value: tracecontext,baggage
           envFrom:
             - configMapRef:
                 name: checkout
@@ -692,6 +700,8 @@ spec:
               value: none
             - name: OTEL_LOGS_EXPORTER
               value: none
+            - name: OTEL_PROPAGATORS
+              value: tracecontext,baggage
             - name: METADATA_KUBERNETES_POD_NAME
               valueFrom:
                 fieldRef:

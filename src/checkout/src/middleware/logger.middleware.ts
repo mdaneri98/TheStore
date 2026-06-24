@@ -17,26 +17,46 @@
  */
 
 import { Injectable, Logger, NestMiddleware } from '@nestjs/common';
+import { context, isSpanContextValid, trace } from '@opentelemetry/api';
 import { Request, Response, NextFunction } from 'express';
 
 @Injectable()
 export class LoggerMiddleware implements NestMiddleware {
+  private static readonly TRACE_ID_HEADER = 'X-Trace-Id';
   private logger = new Logger(`HTTP`);
+
   use(request: Request, response: Response, next: NextFunction) {
     const startAt = process.hrtime();
     const { ip, method, originalUrl } = request;
     const userAgent = request.get('user-agent') || '';
+    const traceId = this.currentTraceId();
+
+    if (traceId) {
+      response.setHeader(LoggerMiddleware.TRACE_ID_HEADER, traceId);
+    }
 
     response.on('finish', () => {
       const { statusCode } = response;
       const contentLength = response.get('content-length');
       const diff = process.hrtime(startAt);
       const responseTime = diff[0] * 1e3 + diff[1] * 1e-6;
+      const completedTraceId = this.currentTraceId() || traceId;
+
       this.logger.log(
-        `${method} ${originalUrl} ${statusCode} ${responseTime}ms ${contentLength} - ${userAgent} ${ip}`,
+        `traceId=${completedTraceId || 'none'} ${method} ${originalUrl} ${statusCode} ${responseTime}ms ${contentLength} - ${userAgent} ${ip}`,
       );
     });
 
     next();
+  }
+
+  private currentTraceId(): string | undefined {
+    const spanContext = trace.getSpan(context.active())?.spanContext();
+
+    if (!spanContext || !isSpanContextValid(spanContext)) {
+      return undefined;
+    }
+
+    return spanContext.traceId;
   }
 }

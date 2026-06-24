@@ -45,7 +45,9 @@ import (
 	"go.opentelemetry.io/otel/exporters/otlp/otlptrace"
 	"go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracehttp"
 	"go.opentelemetry.io/otel/propagation"
+	sdkresource "go.opentelemetry.io/otel/sdk/resource"
 	sdktrace "go.opentelemetry.io/otel/sdk/trace"
+	oteltrace "go.opentelemetry.io/otel/trace"
 )
 
 // @title Catalog API
@@ -106,6 +108,7 @@ func main() {
 
 	catalog.Use(chaosController.ChaosMiddleware())
 	catalog.Use(otelgin.Middleware("catalog-server"))
+	catalog.Use(traceIDMiddleware())
 
 	catalog.GET("/products", c.GetProducts)
 
@@ -169,6 +172,43 @@ func main() {
 	log.Println("Server exiting")
 }
 
+func traceIDMiddleware() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		traceID := currentTraceID(c)
+		if traceID != "" {
+			c.Header("X-Trace-Id", traceID)
+		}
+
+		c.Next()
+
+		if traceID == "" {
+			traceID = currentTraceID(c)
+		}
+
+		if traceID == "" {
+			return
+		}
+
+		c.Header("X-Trace-Id", traceID)
+		log.Printf(
+			"traceId=%s %s %s status=%d",
+			traceID,
+			c.Request.Method,
+			c.Request.URL.Path,
+			c.Writer.Status(),
+		)
+	}
+}
+
+func currentTraceID(c *gin.Context) string {
+	spanContext := oteltrace.SpanFromContext(c.Request.Context()).SpanContext()
+	if !spanContext.IsValid() {
+		return ""
+	}
+
+	return spanContext.TraceID().String()
+}
+
 func initTracer(ctx context.Context) (*sdktrace.TracerProvider, error) {
 	client := otlptracehttp.NewClient()
 	exporter, err := otlptrace.New(ctx, client)
@@ -176,8 +216,17 @@ func initTracer(ctx context.Context) (*sdktrace.TracerProvider, error) {
 		return nil, fmt.Errorf("creating OTLP trace exporter: %w", err)
 	}
 	idg := xray.NewIDGenerator()
-	ec2ResourceDetector := ec2.NewResourceDetector()
-	resource, _ := ec2ResourceDetector.Detect(context.Background())
+	resource, err := sdkresource.New(ctx,
+		sdkresource.WithFromEnv(),
+		sdkresource.WithTelemetrySDK(),
+		sdkresource.WithProcess(),
+		sdkresource.WithOS(),
+		sdkresource.WithHost(),
+		sdkresource.WithDetectors(ec2.NewResourceDetector()),
+	)
+	if err != nil {
+		return nil, fmt.Errorf("creating OTEL resource: %w", err)
+	}
 	tp := sdktrace.NewTracerProvider(
 		sdktrace.WithBatcher(exporter),
 		sdktrace.WithIDGenerator(idg),
