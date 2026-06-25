@@ -395,7 +395,7 @@ data:
           "targets": [
             {
               "datasource": { "type": "loki", "uid": "loki" },
-              "expr": "{namespace=\"store\"} |~ \"(?i)( 5[0-9][0-9] |status.?=.?5|server_error|error)\"",
+              "expr": "{namespace=\"store\"} |~ \"(?i)( 5[0-9][0-9] |status.?=.500 INTERNAL_SERVER_ERROR)\"",
               "refId": "A"
             }
           ],
